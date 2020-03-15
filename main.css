@@ -1,0 +1,50 @@
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: arial;
+  background-color: #f4f2f2
+}
+.name {
+  font-weight: bold;
+  text-transform: capitalize;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.2);
+  background-color: white;
+  font-size: 20px;
+}
+.inputs {
+margin-bottom: 10px;
+text-align: center;
+margin-top: 40px;
+}
+input#tickerSymbol {
+width: 205px;
+height: 30px;
+border-radius: 4px;
+border: none;
+text-indent: 10px;
+font-size: 13px;
+box-shadow: 0 1px 2px rgba(0,0,0,.2)
+}
+input#tickerSymbol:focus {
+outline: none;
+box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+button {
+height: 30px;
+font-size: 13px;
+font-weight: 600;
+border: none;
+background-color: #2779ba;
+color: white;
+border-radius: 4px;
+box-shadow: 0 1px 2px rgba(0,0,0,.2);
+cursor: pointer;
+outline: none;
+}
+button:active {
+outline: none;
+box-shadow: 0 1px 10px rgb(39, 121, 186);
+}
