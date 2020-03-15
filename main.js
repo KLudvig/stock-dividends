@@ -42,7 +42,7 @@ const getPriceAndDividends = ([priceFile, dividendFile]) => {
 
 //Get price
 let getPrice = new Promise(function(resolve, reject){
-  let priceArray = Object.entries(priceFile['Time Series (Daily)']) //Object.entries make the object iterable as an array
+  let priceArray = Object.entries(priceFile['Time Series (Daily)']) //Object.entries makes the object iterable as an array
   let price = parseFloat(priceArray['0']['1']['4. close']);         //Gets the latest price
     console.log('price: '+ price)
     resolve(price)
@@ -52,7 +52,7 @@ let getPrice = new Promise(function(resolve, reject){
 
 //Get Yearly Dividends
 let getDividend = new Promise(function(resolve, reject){
-    let objArray = Object.entries(dividendFile['Monthly Adjusted Time Series']) //1. Using Object.entries to make the object iterable as an array
+    let objArray = Object.entries(dividendFile['Monthly Adjusted Time Series']) //1. Object.entries makes the object iterable as an array
     let dividendArray = [];                                                     //2. Empty array to hold the dividends
     let i = 1                                                                   //3. Get dividends for the year. "i" starts at one because we want to get dividends from the last month and one year back, not from this month
     while(i<=12) {
