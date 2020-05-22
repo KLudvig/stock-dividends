@@ -1,89 +1,74 @@
 document.getElementById("clickMe").addEventListener("click", run);
 
-function run(){
-    let tickerSymbol = document.getElementById('tickerSymbol').value //ticker symbol for the stock
-    let keyAPI = 'Add API Key' //Add API key from Alpha Vantage. Note for security: In a real application this would be called in the backend so it cant be seen.
-    
-    //URL DATA 1 (for price)
-    const urlData1 = { 
+//Async function to get stock info. Runs onClick.
+async function run() {
+  const getStock = document.getElementById('tickerSymbol').value;
+  const [dividend, price] = await extractData(getStock);
+  return createHTML([dividend, price]);
+  run();
+};
+
+ //Reusable function for making api calls to Alpha Vantage
+const apiCall = (ticker, func, compact) => {
+  const key = 'API KEY';
+  const urlData = { 
       url: 'https://www.alphavantage.co/query?function=',
-      theFunction: 'TIME_SERIES_DAILY', 
-      symbol: tickerSymbol, 
-      apiKey: keyAPI, 
-      outputsize: 'compact'
+      theFunction: func, 
+      symbol: ticker, 
+      apiKey: key, 
+      outputsize: compact
   };
-    const {url,theFunction,symbol,apiKey, outputsize} = urlData1
-    const apiUrl1 = `${url}${theFunction}&symbol=${symbol}&outputsize=${outputsize}&apikey=${apiKey}`;
-    const fetch1Price = fetch(apiUrl1) //Fetch for price
+  const {url,theFunction,symbol,apiKey, outputsize} = urlData;
+  const apiUrl = `${url}${theFunction}&symbol=${symbol}${outputsize}&apikey=${apiKey}`;
+  return fetch(apiUrl);
+};
 
-    //URL DATA 2 (for dividends)
-    const urlData2 = { 
-      url2: 'https://www.alphavantage.co/query?function=',
-      theFunction2: 'TIME_SERIES_MONTHLY_ADJUSTED', 
-      symbol2: tickerSymbol, 
-      apiKey2: keyAPI 
-    };
-    const {url2,theFunction2,symbol2,apiKey2} = urlData2
-    const apiUrl2 = `${url2}${theFunction2}&symbol=${symbol2}&apikey=${apiKey2}`;
-    const fetch2Dividend = fetch(apiUrl2) //Fetch for dividend
+//Function to extract the data
+async function extractData(getStock) {
+  
+  const fetchPrice = apiCall(getStock, 'TIME_SERIES_DAILY', '&outputsize=compact');
+  const fetchDividend = apiCall(getStock, 'TIME_SERIES_MONTHLY_ADJUSTED', '');
+  const apiData = await Promise.all([fetchPrice, fetchDividend]);
+  const priceFile = await apiData[0].json();
+  const dividendFile = await apiData[1].json();
 
-Promise.all([fetch1Price, fetch2Dividend]) //wait until both fetch data is finished
-.then((file) => {
-  let priceFile = file[0].json() 
-  let dividendFile = file[1].json() 
-  return Promise.all([priceFile, dividendFile]) 
-})
-.then(([priceFile, dividendFile]) => getPriceAndDividends([priceFile, dividendFile])) //get dividends and price from the data
-.then(([dividend, price]) => createHTML([dividend, price])) //display the data with HTML.
+  //Get data from first API call
+  const getPrice = new Promise(resolve => {
+    const priceArray = Object.entries(priceFile['Time Series (Daily)']);
+    const price = parseFloat(priceArray['0']['1']['4. close']);        
+    resolve(price);
+  });
 
+  //Get data from second Api call
+  const getDividend = new Promise(resolve => {
+    const objArray = Object.entries(dividendFile['Monthly Adjusted Time Series']);
+    const dividendArray = [];                                                     
+    let i = 1;
 
-//Function to get price and dividends from the data
-const getPriceAndDividends = ([priceFile, dividendFile]) => {
-
-//Get price
-let getPrice = new Promise(function(resolve, reject){
-  let priceArray = Object.entries(priceFile['Time Series (Daily)']) //Object.entries makes the object iterable as an array
-  let price = parseFloat(priceArray['0']['1']['4. close']);         //Gets the latest price
-    console.log('price: '+ price)
-    resolve(price)
-}).catch((err) => {
-  console.log(err)
-});
-
-//Get Yearly Dividends
-let getDividend = new Promise(function(resolve, reject){
-    let objArray = Object.entries(dividendFile['Monthly Adjusted Time Series']) //1. Object.entries makes the object iterable as an array
-    let dividendArray = [];                                                     //2. Empty array to hold the dividends
-    let i = 1                                                                   //3. Get dividends for the year. "i" starts at one because we want to get dividends from the last month and one year back, not from this month
     while(i<=12) {
     dividendArray.push(parseFloat(objArray[i]['1']["7. dividend amount"]))
     i++
     }
-
-    let dividend = dividendArray.reduce((accumulator, currentValue) => {        //4. Sum the dividends
-      return accumulator + currentValue;
+    let dividend = dividendArray.reduce((accumulator, currentValue) => {        
+    return accumulator + currentValue;
     });
-    console.log('dividend: ' + dividend)
-    resolve(dividend)
-  })
-  .catch((err) => {
-    console.log(err)
+
+    resolve(dividend);
   });
-  return Promise.all([getDividend, getPrice]); 
-}
 
-//Function to create HTML
+  const [dividend, price] = await Promise.all([getDividend, getPrice]); 
+
+  return [dividend, price];
+};
+
 const createHTML = ([dividend, price]) => {
-
-//convert to two decimals for display at html (not for use in calculation)
-let theDividend = dividend.toFixed(2)
-let thePrice = price.toFixed(2)
-//dividend in percent with two decimals (using full decimals for calculation)
-let dividendPercent = (dividend/price * 100).toFixed(2)
-//generate the HTML
-const dataInsideDiv = `<div class="name"><p><span style="font-weight: normal">Price: </span>
-${thePrice} $ </p><p><span style="font-weight: normal">Dividend: </span>
-${theDividend} $ (${dividendPercent} %)</p></div>`
-document.querySelector('.stock').innerHTML = dataInsideDiv;
- };
-  } 
+  const theDividend = dividend.toFixed(2);
+  const thePrice = price.toFixed(2);
+  const dividendPercent = (dividend/price * 100).toFixed(2);
+  
+  //Generate the HTML
+  const dataInsideDiv = `<div class="name"><p><span style="font-weight: normal">Price: </span>
+  ${thePrice} $ </p><p><span style="font-weight: normal">Dividend: </span>
+  ${theDividend} $ (${dividendPercent} %)</p></div>`;
+  document.querySelector('.stock').innerHTML = dataInsideDiv;
+};
